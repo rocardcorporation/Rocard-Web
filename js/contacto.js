@@ -1,9 +1,10 @@
 /* ============================================================
    ROCARD — contacto.js
-   Dynamic "Otro" textarea + form success message
    ============================================================ */
 (function () {
   'use strict';
+
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAP-vnQlytSHyws_xLZYtjK2ViccSa4Xlhghu8CkbTX9iYrEQPVUDmd38qbax_AW-WMg/exec';
 
   /* ── "Otro" textarea reveal ───────────────────────────── */
   const serviceSelect = document.getElementById('servicio');
@@ -19,15 +20,16 @@
     });
   }
 
-  /* ── Form submit (success message placeholder) ────────── */
-  const form    = document.getElementById('contactForm');
-  const success = document.getElementById('formSuccess');
+  /* ── Form submit ──────────────────────────────────────── */
+  const form      = document.getElementById('contactForm');
+  const success   = document.getElementById('formSuccess');
+  const submitBtn = document.getElementById('submitBtn');
 
   if (form && success) {
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', async e => {
       e.preventDefault();
 
-      /* Basic validation */
+      /* Validación */
       const required = form.querySelectorAll('[required]');
       let valid = true;
       required.forEach(field => {
@@ -39,12 +41,36 @@
           }, { once: true });
         }
       });
-
       if (!valid) return;
 
-      /* Show success */
-      form.style.display = 'none';
-      success.classList.add('visible');
+      /* Enviar */
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'ENVIANDO...';
+
+      const data = {
+        nombre:    document.getElementById('nombre').value.trim(),
+        telefono:  document.getElementById('telefono').value.trim(),
+        email:     document.getElementById('email').value.trim(),
+        servicio:  document.getElementById('servicio').value,
+        otro_desc: document.getElementById('otro-desc')?.value.trim() || ''
+      };
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        form.style.display = 'none';
+        success.classList.add('visible');
+
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'ENVIAR CONSULTA';
+        alert('Hubo un error. Por favor intenta de nuevo.');
+      }
     });
   }
 
